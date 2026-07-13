@@ -1,0 +1,14 @@
+[Unit]
+Description=ZMS Ansible control-node self-converge (bootstrap.yml)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ansible
+Group=ansible
+EnvironmentFile=/etc/ansible/estate.env
+WorkingDirectory=/opt/control-repo
+ExecStart=/opt/control-repo/scripts/reconverge.sh
+ExecStopPost=/bin/sh -c '/opt/control-repo/scripts/notify-result.sh "$EXIT_STATUS" ansible-bootstrap'
+TimeoutStartSec=1800

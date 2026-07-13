@@ -1,0 +1,19 @@
+---
+- name: Ubuntu base setup
+  hosts: "{{ target_hosts | default('distro_ubuntu') }}"
+  become: true
+  tasks:
+    - name: End play on non-Debian hosts
+      ansible.builtin.meta: end_host
+      when: ansible_os_family != 'Debian'
+
+    - name: Update apt cache and install base tooling
+      ansible.builtin.apt:
+        name:
+          - curl
+          - vim
+          - htop
+          - unzip
+        state: present
+        update_cache: true
+        cache_valid_time: 3600

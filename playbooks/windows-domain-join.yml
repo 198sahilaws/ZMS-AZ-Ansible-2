@@ -1,0 +1,27 @@
+---
+- name: Windows domain join
+  hosts: "{{ target_hosts | default('os_windows') }}"
+  gather_facts: true
+  tasks:
+    - name: End play on non-Windows hosts
+      ansible.builtin.meta: end_host
+      when: ansible_os_family != 'Windows'
+
+    - name: Skip domain controllers (already domain members)
+      ansible.builtin.meta: end_host
+      when: inventory_hostname in (groups['domain_controllers'] | default([]))
+
+    - name: Join the Active Directory domain
+      microsoft.ad.membership:
+        dns_domain_name: "{{ ad_domain_name | default('zms.local') }}"
+        domain_admin_user: >-
+          {{ (lookup('azure.azcollection.azure_keyvault_secret',
+              ansible_secret_name, vault_url=azure_keyvault_url)
+             | from_json).domain_join_username }}
+        domain_admin_password: >-
+          {{ (lookup('azure.azcollection.azure_keyvault_secret',
+              ansible_secret_name, vault_url=azure_keyvault_url)
+             | from_json).domain_join_password }}
+        state: domain
+        reboot: true
+      no_log: true

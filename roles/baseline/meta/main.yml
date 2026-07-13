@@ -1,0 +1,20 @@
+---
+galaxy_info:
+  role_name: baseline
+  namespace: zms
+  author: platform-team
+  description: Cross-OS baseline - timezone, time synchronisation, base packages.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+    - name: EL
+      versions:
+        - "9"
+    - name: Windows
+      versions:
+        - all
+dependencies: []

@@ -1,0 +1,19 @@
+---
+- name: Windows AD DS forest promotion
+  hosts: "{{ target_hosts | default('role_dc') }}"
+  gather_facts: true
+  tasks:
+    - name: End play on non-Windows hosts
+      ansible.builtin.meta: end_host
+      when: ansible_os_family != 'Windows'
+
+    - name: Install AD DS and promote the forest
+      microsoft.ad.domain:
+        dns_domain_name: "{{ ad_domain_name | default('zms.local') }}"
+        domain_netbios_name: "{{ ad_netbios_name | default('ZMS') }}"
+        safe_mode_password: >-
+          {{ (lookup('azure.azcollection.azure_keyvault_secret',
+              ansible_secret_name, vault_url=azure_keyvault_url)
+             | from_json).dsrm_password }}
+        reboot: true
+      no_log: true

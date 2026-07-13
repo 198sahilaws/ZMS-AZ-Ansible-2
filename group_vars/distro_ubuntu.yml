@@ -1,0 +1,10 @@
+---
+# ansible_group_priority raises this group above os_linux so, on an
+# alphabetical merge, distro settings win (distro > os_linux). Drives the
+# apt package manager and the login user (uniform on Azure, kept for parity).
+ansible_group_priority: 10
+ansible_user: azureuser
+package_manager: apt
+mysql_service_name: mariadb
+mysql_socket: /var/run/mysqld/mysqld.sock
+web_service_name: apache2

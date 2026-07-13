@@ -1,0 +1,15 @@
+---
+# Names only - never bind the whole secret document to a variable. The vault
+# URL and secret name come from the injected environment; every consumer
+# resolves the ONE field it needs, inline, at point of use, with no_log.
+azure_keyvault_url: "{{ lookup('env', 'AZURE_KEYVAULT_URL') }}"
+ansible_secret_name: "{{ lookup('env', 'ANSIBLE_SECRET_NAME') }}"
+control_repo_dir: "{{ lookup('env', 'CONTROL_REPO_DIR') | default('/opt/control-repo', true) }}"
+
+# Path where bootstrap.yml writes the SSH private key pulled from Key Vault.
+ssh_key_file: /etc/ansible/keys/id_ssh
+
+# Example of a field-scoped lookup (do this at point of use, never globally):
+#   "{{ (lookup('azure.azcollection.azure_keyvault_secret',
+#         ansible_secret_name, vault_url=azure_keyvault_url)
+#       | from_json).winrm_password }}"

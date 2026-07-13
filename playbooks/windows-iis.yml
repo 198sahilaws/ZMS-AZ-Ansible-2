@@ -1,0 +1,19 @@
+---
+- name: Windows IIS
+  hosts: "{{ target_hosts | default('role_web') }}"
+  gather_facts: true
+  tasks:
+    - name: End play on non-Windows hosts
+      ansible.builtin.meta: end_host
+      when: ansible_os_family != 'Windows'
+
+    - name: Install the IIS web server role
+      ansible.windows.win_feature:
+        name: Web-Server
+        state: present
+        include_management_tools: true
+      register: iis_feature
+
+    - name: Reboot if the IIS installation requires it
+      ansible.windows.win_reboot:
+      when: iis_feature.reboot_required | default(false)

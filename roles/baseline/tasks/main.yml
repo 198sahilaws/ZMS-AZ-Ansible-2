@@ -1,0 +1,44 @@
+---
+- name: Configure Linux baseline
+  when: ansible_os_family in ['Debian', 'RedHat']
+  block:
+    - name: Set system timezone
+      community.general.timezone:
+        name: "{{ baseline_timezone }}"
+
+    - name: Install chrony (Debian family)
+      ansible.builtin.apt:
+        name: chrony
+        state: present
+        update_cache: true
+      when: ansible_os_family == 'Debian'
+
+    - name: Install chrony (RedHat family)
+      ansible.builtin.dnf:
+        name: chrony
+        state: present
+      when: ansible_os_family == 'RedHat'
+
+    - name: Install common base packages
+      ansible.builtin.package:
+        name: "{{ baseline_packages_common }}"
+        state: present
+
+    - name: Enable and start time synchronisation
+      ansible.builtin.service:
+        name: "{{ 'chrony' if ansible_os_family == 'Debian' else 'chronyd' }}"
+        state: started
+        enabled: true
+
+- name: Configure Windows baseline
+  when: ansible_os_family == 'Windows'
+  block:
+    - name: Set Windows timezone
+      community.windows.win_timezone:
+        timezone: "{{ baseline_windows_timezone }}"
+
+    - name: Ensure the Windows Time service is running
+      ansible.windows.win_service:
+        name: w32time
+        state: started
+        start_mode: auto

@@ -1,0 +1,9 @@
+---
+# ansible_group_priority raises this group above os_linux so distro settings
+# win the merge. Drives the dnf package manager and the login user.
+ansible_group_priority: 10
+ansible_user: azureuser
+package_manager: dnf
+mysql_service_name: mariadb
+mysql_socket: /var/lib/mysql/mysql.sock
+web_service_name: httpd

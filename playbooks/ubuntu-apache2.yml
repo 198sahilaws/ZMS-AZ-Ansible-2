@@ -1,0 +1,20 @@
+---
+- name: Ubuntu Apache2
+  hosts: "{{ target_hosts | default('distro_ubuntu') }}"
+  become: true
+  tasks:
+    - name: End play on non-Debian hosts
+      ansible.builtin.meta: end_host
+      when: ansible_os_family != 'Debian'
+
+    - name: Install Apache2 from the distro repo
+      ansible.builtin.apt:
+        name: apache2
+        state: present
+        update_cache: true
+
+    - name: Ensure Apache2 is enabled and running
+      ansible.builtin.service:
+        name: apache2
+        state: started
+        enabled: true

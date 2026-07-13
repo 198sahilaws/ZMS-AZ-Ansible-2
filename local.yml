@@ -1,0 +1,5 @@
+---
+# ansible-pull entrypoint - self-configures the control node by importing
+# bootstrap.yml. Used by the ansible-bootstrap systemd unit / pull model.
+- name: Import bootstrap for ansible-pull
+  ansible.builtin.import_playbook: bootstrap.yml

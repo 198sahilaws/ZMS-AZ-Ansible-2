@@ -1,0 +1,6 @@
+---
+baseline_timezone: "Etc/UTC"
+baseline_windows_timezone: "UTC"
+baseline_packages_common:
+  - curl
+  - vim

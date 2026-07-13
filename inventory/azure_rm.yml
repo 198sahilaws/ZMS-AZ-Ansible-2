@@ -1,0 +1,47 @@
+---
+# Dynamic inventory via the Azure Resource Manager plugin.
+# Authenticates with the control node's attached Managed Identity (MSI) -
+# no service-principal keys on disk. The env vars are written by Terraform
+# cloud-init into /etc/ansible/estate.env and loaded by the systemd units.
+plugin: azure.azcollection.azure_rm
+
+auth_source: msi
+
+# Scope enumeration to the estate's resource group (from the injected env).
+# This MUST stay RG-scoped: the control identity holds Reader on ONLY this
+# resource group, so a subscription-wide list would 403. The azure_rm plugin
+# templates this field, so the env lookup is resolved at inventory time; if it
+# ever returns empty, the site.yml pre-flight fails loudly rather than silently.
+# (Confirm once with: ansible-inventory -i inventory/azure_rm.yml --graph)
+include_vm_resource_groups:
+  - "{{ lookup('env', 'AZURE_RESOURCE_GROUP') }}"
+
+# Use the bare VM name as the inventory hostname.
+plain_host_names: true
+
+# The control node is in-VNet: talk to private IPs.
+hostvar_expressions:
+  ansible_host: private_ipv4_addresses[0]
+
+# Exclude anything not powered on or not provisioned by Terraform.
+default_host_filters:
+  - "powerstate != 'running'"
+  - "tags['ManagedBy'] | default('') != 'Terraform'"
+
+# Build connection/behaviour groups from tags (mirrors the AWS design):
+#   OS=linux         -> os_linux         Distro=ubuntu -> distro_ubuntu
+#   OS=windows       -> os_windows       Distro=rhel   -> distro_rhel
+#   Role=web         -> role_web         Environment=dev -> env_dev
+keyed_groups:
+  - prefix: os
+    key: "tags['OS'] | default('unknown')"
+  - prefix: distro
+    key: "tags['Distro'] | default('none')"
+  - prefix: role
+    key: "tags['Role'] | default('none')"
+  - prefix: env
+    key: "tags['Environment'] | default('none')"
+
+# Convenience group for Windows domain controllers.
+conditional_groups:
+  domain_controllers: "tags['Domain_Controller'] | default('') == 'Enabled'"

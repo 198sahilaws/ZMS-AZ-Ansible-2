@@ -1,0 +1,52 @@
+---
+# Estate push. A pre-flight play, then a Linux play and a Windows play,
+# each applying the baseline role plus a baseline package. serial gives
+# rolling batches; max_fail_percentage bounds the blast radius.
+
+- name: Pre-flight checks
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Assert Key Vault URL and secret name are set
+      ansible.builtin.assert:
+        that:
+          - azure_keyvault_url | length > 0
+          - ansible_secret_name | length > 0
+        fail_msg: >-
+          AZURE_KEYVAULT_URL and ANSIBLE_SECRET_NAME must be set - source
+          /etc/ansible/estate.env before running.
+        success_msg: "Key Vault URL and secret name present."
+
+    - name: Assert the dynamic inventory discovered hosts
+      ansible.builtin.assert:
+        that: groups['all'] | default([]) | length > 0
+        fail_msg: >-
+          Inventory returned no hosts - check the subscription/resource group
+          and that VMs carry the ManagedBy=Terraform tag.
+
+- name: Linux estate baseline
+  hosts: os_linux
+  gather_facts: true
+  serial: "50%"
+  max_fail_percentage: 25
+  roles:
+    - baseline
+  tasks:
+    - name: Ensure a baseline package is present
+      ansible.builtin.package:
+        name: "{{ 'ncdu' if ansible_os_family == 'Debian' else 'tree' }}"
+        state: present
+
+- name: Windows estate baseline
+  hosts: os_windows
+  gather_facts: true
+  serial: "50%"
+  max_fail_percentage: 25
+  roles:
+    - baseline
+  tasks:
+    - name: Ensure a baseline package is present (Chocolatey public feed)
+      chocolatey.chocolatey.win_chocolatey:
+        name: 7zip
+        state: present

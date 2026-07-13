@@ -1,0 +1,21 @@
+---
+- name: ZMS enforcer provisioning
+  hosts: "{{ target_hosts | default('os_windows') }}"
+  gather_facts: true
+  tasks:
+    - name: End play on non-Windows hosts
+      ansible.builtin.meta: end_host
+      when: ansible_os_family != 'Windows'
+
+    - name: Deploy the ZMS enforcer provisioning nonce
+      ansible.windows.win_powershell:
+        script: |
+          param($Nonce)
+          New-Item -Path 'C:\ProgramData\ZMS' -ItemType Directory -Force | Out-Null
+          Set-Content -Path 'C:\ProgramData\ZMS\provision.key' -Value $Nonce -NoNewline
+        parameters:
+          Nonce: >-
+            {{ (lookup('azure.azcollection.azure_keyvault_secret',
+                ansible_secret_name, vault_url=azure_keyvault_url)
+               | from_json).provision_key }}
+      no_log: true

@@ -1,0 +1,14 @@
+[Unit]
+Description=ZMS Ansible estate push (site.yml)
+After=network-online.target ansible-bootstrap.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ansible
+Group=ansible
+EnvironmentFile=/etc/ansible/estate.env
+WorkingDirectory=/opt/control-repo
+ExecStart=/usr/local/bin/ansible-playbook site.yml
+ExecStopPost=/bin/sh -c '/opt/control-repo/scripts/notify-result.sh "$EXIT_STATUS" ansible-estate'
+TimeoutStartSec=3600

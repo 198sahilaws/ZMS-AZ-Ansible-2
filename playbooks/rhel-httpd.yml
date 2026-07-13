@@ -1,0 +1,19 @@
+---
+- name: RHEL httpd
+  hosts: "{{ target_hosts | default('distro_rhel') }}"
+  become: true
+  tasks:
+    - name: End play on non-RedHat hosts
+      ansible.builtin.meta: end_host
+      when: ansible_os_family != 'RedHat'
+
+    - name: Install httpd from the distro repo
+      ansible.builtin.dnf:
+        name: httpd
+        state: present
+
+    - name: Ensure httpd is enabled and running
+      ansible.builtin.service:
+        name: httpd
+        state: started
+        enabled: true

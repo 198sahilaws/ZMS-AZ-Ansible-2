@@ -1,0 +1,35 @@
+---
+- name: RHEL MariaDB
+  hosts: "{{ target_hosts | default('distro_rhel') }}"
+  become: true
+  tasks:
+    - name: End play on non-RedHat hosts
+      ansible.builtin.meta: end_host
+      when: ansible_os_family != 'RedHat'
+
+    - name: Install MariaDB server and the Python connector
+      ansible.builtin.dnf:
+        name:
+          - mariadb-server
+          - python3-PyMySQL
+        state: present
+
+    - name: Ensure MariaDB is enabled and running
+      ansible.builtin.service:
+        name: "{{ mysql_service_name | default('mariadb') }}"
+        state: started
+        enabled: true
+
+    - name: Set the MariaDB root password idempotently
+      community.mysql.mysql_user:
+        name: root
+        host: localhost
+        password: >-
+          {{ (lookup('azure.azcollection.azure_keyvault_secret',
+              ansible_secret_name, vault_url=azure_keyvault_url)
+             | from_json).mysql_root_password }}
+        plugin: mysql_native_password
+        check_implicit_admin: true
+        login_unix_socket: "{{ mysql_socket | default('/var/lib/mysql/mysql.sock') }}"
+        state: present
+      no_log: true

@@ -1,0 +1,11 @@
+[Unit]
+Description=Run the ZMS control-node self-converge (~every 30 minutes)
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=30min
+RandomizedDelaySec=60
+Unit=ansible-bootstrap.service
+
+[Install]
+WantedBy=timers.target

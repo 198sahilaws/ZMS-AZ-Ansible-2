@@ -1,0 +1,25 @@
+---
+- name: Windows SMB share
+  hosts: "{{ target_hosts | default('role_fileserver') }}"
+  gather_facts: true
+  vars:
+    share_name: "{{ smb_share_name | default('zmsshare') }}"
+    share_path: "{{ smb_share_path | default('C:\\Shares\\zmsshare') }}"
+    # Parameterised principal; default 'Authenticated Users' (never 'Everyone').
+    share_principal: "{{ smb_share_principal | default('Authenticated Users') }}"
+  tasks:
+    - name: End play on non-Windows hosts
+      ansible.builtin.meta: end_host
+      when: ansible_os_family != 'Windows'
+
+    - name: Ensure the share directory exists
+      ansible.windows.win_file:
+        path: "{{ share_path }}"
+        state: directory
+
+    - name: Create the SMB share
+      ansible.windows.win_share:
+        name: "{{ share_name }}"
+        path: "{{ share_path }}"
+        state: present
+        full: "{{ share_principal }}"

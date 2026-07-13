@@ -1,0 +1,11 @@
+[Unit]
+Description=Push the ZMS estate with site.yml (~every 60 minutes)
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=60min
+RandomizedDelaySec=120
+Unit=ansible-estate.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,9 @@
+---
+# Linux connection defaults. become (sudo) is enabled here; the distro_*
+# groups win over this group via ansible_group_priority for anything they set.
+ansible_connection: ssh
+ansible_user: "{{ linux_admin_user | default('azureuser') }}"
+ansible_become: true
+ansible_become_method: sudo
+ansible_ssh_private_key_file: "{{ ssh_key_file }}"
+ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"

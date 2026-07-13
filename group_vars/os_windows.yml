@@ -1,0 +1,20 @@
+---
+# Windows connection defaults. WinRM over HTTPS (5986) with NTLM; the
+# self-signed listener cert is ignored. Credentials are resolved field-by-
+# field from the consolidated Key Vault secret at point of use (no_log).
+# ansible_become is false: the global sudo 'become' is invalid on Windows -
+# win_* modules run as the admin and need no escalation.
+ansible_connection: winrm
+ansible_port: 5986
+ansible_winrm_transport: ntlm
+ansible_winrm_server_cert_validation: ignore
+ansible_become: false
+
+ansible_user: >-
+  {{ (lookup('azure.azcollection.azure_keyvault_secret',
+      ansible_secret_name, vault_url=azure_keyvault_url)
+     | from_json).winrm_username }}
+ansible_password: >-
+  {{ (lookup('azure.azcollection.azure_keyvault_secret',
+      ansible_secret_name, vault_url=azure_keyvault_url)
+     | from_json).winrm_password }}

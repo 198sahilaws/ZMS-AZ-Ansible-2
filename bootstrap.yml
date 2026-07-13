@@ -1,0 +1,43 @@
+---
+# Control-node self-configuration. Collections are installed beforehand by
+# scripts/reconverge.sh via the ansible-galaxy CLI (so we never depend on a
+# collection to install collections). This play asserts the secret name and
+# writes the SSH private key from Key Vault to a service-user-readable file.
+
+- name: Bootstrap the control node
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Assert the consolidated secret name is set
+      ansible.builtin.assert:
+        that: ansible_secret_name | length > 0
+        fail_msg: "ANSIBLE_SECRET_NAME is not set (see /etc/ansible/estate.env)."
+
+    - name: Ensure the Ansible log directory exists
+      ansible.builtin.file:
+        path: /var/log/ansible
+        state: directory
+        owner: ansible
+        group: ansible
+        mode: "0755"
+
+    - name: Ensure the key directory exists (service-user owned)
+      ansible.builtin.file:
+        path: "{{ ssh_key_file | dirname }}"
+        state: directory
+        owner: ansible
+        group: ansible
+        mode: "0750"
+
+    - name: Write the SSH private key from Key Vault
+      ansible.builtin.copy:
+        content: >-
+          {{ (lookup('azure.azcollection.azure_keyvault_secret',
+              ansible_secret_name, vault_url=azure_keyvault_url)
+             | from_json).ssh_private_key }}
+        dest: "{{ ssh_key_file }}"
+        owner: ansible
+        group: ansible
+        mode: "0600"
+      no_log: true

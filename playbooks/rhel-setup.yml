@@ -1,0 +1,17 @@
+---
+- name: RHEL base setup
+  hosts: "{{ target_hosts | default('distro_rhel') }}"
+  become: true
+  tasks:
+    - name: End play on non-RedHat hosts
+      ansible.builtin.meta: end_host
+      when: ansible_os_family != 'RedHat'
+
+    - name: Install base tooling
+      ansible.builtin.dnf:
+        name:
+          - curl
+          - vim-enhanced
+          - htop
+          - unzip
+        state: present

@@ -1,0 +1,17 @@
+# Installed collections (fetched on the control node)
+collections/
+
+# Ansible run artifacts
+*.retry
+.cache/
+*.log
+
+# Local secrets / keys (never commit)
+*.pem
+*.key
+estate.env
+
+# Editor / OS noise
+.vscode/
+.idea/
+.DS_Store
