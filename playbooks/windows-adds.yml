@@ -17,3 +17,16 @@
              | from_json).dsrm_password }}
         reboot: true
       no_log: true
+
+    - name: Point the DC's DNS forwarder at Azure DNS for internet resolution
+      ansible.windows.win_powershell:
+        script: |
+          $fwd = '{{ dc_dns_forwarder | default("168.63.129.16") }}'
+          $current = @((Get-DnsServerForwarder -ErrorAction SilentlyContinue).IPAddress.IPAddressToString)
+          if ($current -notcontains $fwd) {
+            Add-DnsServerForwarder -IPAddress $fwd
+            $Ansible.Changed = $true
+          }
+          else {
+            $Ansible.Changed = $false
+          }

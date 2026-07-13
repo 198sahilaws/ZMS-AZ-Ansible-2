@@ -1,6 +1,6 @@
 ---
 - name: RHEL MariaDB
-  hosts: "{{ target_hosts | default('distro_rhel') }}"
+  hosts: "{{ target_hosts | default('distro_rhel:&role_db') }}"
   become: true
   tasks:
     - name: End play on non-RedHat hosts

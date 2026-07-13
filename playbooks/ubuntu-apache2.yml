@@ -1,6 +1,6 @@
 ---
 - name: Ubuntu Apache2
-  hosts: "{{ target_hosts | default('distro_ubuntu') }}"
+  hosts: "{{ target_hosts | default('distro_ubuntu:&role_web') }}"
   become: true
   tasks:
     - name: End play on non-Debian hosts

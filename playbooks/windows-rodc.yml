@@ -1,0 +1,49 @@
+---
+- name: Windows Read-Only Domain Controller
+  hosts: "{{ target_hosts | default('role_rodc') }}"
+  gather_facts: true
+  # Prerequisites: the writable DC (role_dc, via windows-adds.yml) exists and
+  # this host resolves the AD domain via that DC (windows-dns.yml sets that up).
+  # An RODC must be a domain member BEFORE promotion, so this play joins the
+  # domain first and then promotes it read-only.
+  tasks:
+    - name: End play on non-Windows hosts
+      ansible.builtin.meta: end_host
+      when: ansible_os_family != 'Windows'
+
+    - name: Join the domain as a member (required before RODC promotion)
+      microsoft.ad.membership:
+        dns_domain_name: "{{ ad_domain_name | default('zms.local') }}"
+        domain_admin_user: >-
+          {{ (lookup('azure.azcollection.azure_keyvault_secret',
+              ansible_secret_name, vault_url=azure_keyvault_url)
+             | from_json).domain_join_username }}
+        domain_admin_password: >-
+          {{ (lookup('azure.azcollection.azure_keyvault_secret',
+              ansible_secret_name, vault_url=azure_keyvault_url)
+             | from_json).domain_join_password }}
+        state: domain
+        reboot: true
+      no_log: true
+
+    - name: Promote to a Read-Only Domain Controller in the existing domain
+      microsoft.ad.domain_controller:
+        dns_domain_name: "{{ ad_domain_name | default('zms.local') }}"
+        domain_admin_user: >-
+          {{ (lookup('azure.azcollection.azure_keyvault_secret',
+              ansible_secret_name, vault_url=azure_keyvault_url)
+             | from_json).domain_join_username }}
+        domain_admin_password: >-
+          {{ (lookup('azure.azcollection.azure_keyvault_secret',
+              ansible_secret_name, vault_url=azure_keyvault_url)
+             | from_json).domain_join_password }}
+        safe_mode_password: >-
+          {{ (lookup('azure.azcollection.azure_keyvault_secret',
+              ansible_secret_name, vault_url=azure_keyvault_url)
+             | from_json).dsrm_password }}
+        state: domain_controller
+        read_only: true
+        site_name: "{{ ad_site_name | default('Default-First-Site-Name') }}"
+        install_dns: true
+        reboot: true
+      no_log: true

@@ -12,6 +12,7 @@ exclude_paths:
 mock_modules:
   - azure.azcollection.azure_keyvault_secret
   - microsoft.ad.domain
+  - microsoft.ad.domain_controller
   - microsoft.ad.membership
   - ansible.windows.win_feature
   - ansible.windows.win_service
@@ -26,6 +27,8 @@ mock_modules:
   - community.mysql.mysql_db
   - community.windows.win_timezone
   - community.general.timezone
+  - ansible.posix.firewalld
+  - ansible.windows.win_dns_client
 
 warn_list:
   - experimental

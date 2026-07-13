@@ -1,0 +1,124 @@
+---
+- name: Linux Samba file share
+  hosts: "{{ target_hosts | default('role_fileshare') }}"
+  become: true
+  vars:
+    samba_share_name: "{{ smb_share_name | default('zmsshare') }}"
+    samba_share_path: "{{ smb_share_path | default('/srv/samba/zmsshare') }}"
+    samba_user: "{{ smb_user | default('smbuser') }}"
+    samba_group: "{{ smb_group | default('smbusers') }}"
+    samba_writable: "{{ smb_writable | default(true) | bool }}"
+    samba_password: >-
+      {{ smb_password | default((lookup('azure.azcollection.azure_keyvault_secret',
+          ansible_secret_name, vault_url=azure_keyvault_url)
+         | from_json).samba_password | default('', true), true) }}
+  tasks:
+    - name: End play on non-Linux hosts
+      ansible.builtin.meta: end_host
+      when: ansible_os_family not in ['Debian', 'RedHat']
+
+    - name: Assert a Samba password is available
+      ansible.builtin.assert:
+        that: samba_password | length > 0
+        fail_msg: >-
+          No Samba password found. Set 'samba_password' in the consolidated Key
+          Vault secret (via terraform.tfvars), or pass -e smb_password=<value>.
+
+    - name: Install Samba (Debian family)
+      ansible.builtin.apt:
+        name:
+          - samba
+          - samba-common-bin
+        state: present
+        update_cache: true
+      when: ansible_os_family == 'Debian'
+
+    - name: Install Samba (RedHat family)
+      ansible.builtin.dnf:
+        name:
+          - samba
+          - samba-client
+        state: present
+      when: ansible_os_family == 'RedHat'
+
+    - name: Ensure the Samba group exists
+      ansible.builtin.group:
+        name: "{{ samba_group }}"
+        state: present
+
+    - name: Ensure the Samba system user exists
+      ansible.builtin.user:
+        name: "{{ samba_user }}"
+        group: "{{ samba_group }}"
+        shell: /usr/sbin/nologin
+        create_home: false
+        system: true
+
+    - name: Ensure the share directory exists
+      ansible.builtin.file:
+        path: "{{ samba_share_path }}"
+        state: directory
+        owner: "{{ samba_user }}"
+        group: "{{ samba_group }}"
+        mode: "2770"
+
+    - name: Check whether the Samba account already exists
+      ansible.builtin.command: "pdbedit -L -u {{ samba_user }}"
+      register: samba_account
+      changed_when: false
+      failed_when: false
+
+    - name: Create the Samba account
+      ansible.builtin.shell: |
+        set -o pipefail
+        printf '%s\n%s\n' "$SMB_PW" "$SMB_PW" | smbpasswd -s -a {{ samba_user }}
+      args:
+        executable: /bin/bash
+      environment:
+        SMB_PW: "{{ samba_password }}"
+      when: samba_account.rc != 0
+      changed_when: true
+      no_log: true
+
+    - name: Configure the Samba share
+      ansible.builtin.blockinfile:
+        path: /etc/samba/smb.conf
+        marker: "; {mark} ANSIBLE MANAGED - {{ samba_share_name }}"
+        block: |
+          [{{ samba_share_name }}]
+            path = {{ samba_share_path }}
+            browseable = yes
+            read only = {{ 'no' if samba_writable else 'yes' }}
+            guest ok = no
+            valid users = {{ samba_user }}
+            force group = {{ samba_group }}
+            create mask = 0660
+            directory mask = 2770
+      notify: Restart Samba
+
+    - name: Validate the Samba configuration
+      ansible.builtin.command: testparm -s
+      changed_when: false
+
+    - name: Open the firewall for Samba (RedHat/firewalld)
+      ansible.posix.firewalld:
+        service: samba
+        permanent: true
+        state: enabled
+        immediate: true
+      when: ansible_os_family == 'RedHat'
+      failed_when: false
+
+    - name: Ensure Samba services are enabled and running
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop: "{{ ['smbd', 'nmbd'] if ansible_os_family == 'Debian' else ['smb', 'nmb'] }}"
+
+  handlers:
+    - name: Restart Samba
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: restarted
+      loop: "{{ ['smbd', 'nmbd'] if ansible_os_family == 'Debian' else ['smb', 'nmb'] }}"

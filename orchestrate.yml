@@ -1,0 +1,61 @@
+---
+# Top-level orchestration: configure the whole estate in dependency order.
+# Run from the control node:  ansible-playbook orchestrate.yml
+#
+# Order: baseline -> forest -> DNS -> domain-join -> RODC -> role services.
+# Each imported play targets its own role/distro group and no-ops where a role
+# is absent, so this is safe to run against any role mix.
+
+- name: Baseline the estate (cross-OS)
+  ansible.builtin.import_playbook: site.yml
+
+- name: Promote the writable domain controller (forest)
+  ansible.builtin.import_playbook: playbooks/windows-adds.yml
+
+- name: Point Windows members and RODCs at the DC for DNS
+  ansible.builtin.import_playbook: playbooks/windows-dns.yml
+
+- name: Join Windows members to the domain
+  ansible.builtin.import_playbook: playbooks/windows-domain-join.yml
+
+- name: Promote Read-Only Domain Controllers
+  ansible.builtin.import_playbook: playbooks/windows-rodc.yml
+
+- name: Configure Windows web servers (IIS)
+  ansible.builtin.import_playbook: playbooks/windows-iis.yml
+
+- name: Configure Windows SMB file shares
+  ansible.builtin.import_playbook: playbooks/windows-share.yml
+
+- name: Install Python on Windows hosts
+  ansible.builtin.import_playbook: playbooks/windows-python.yml
+
+- name: Deploy the ZMS enforcer on Windows hosts
+  ansible.builtin.import_playbook: playbooks/windows-zms-enforcer.yml
+
+- name: Configure Windows clients
+  ansible.builtin.import_playbook: playbooks/windows-client.yml
+
+- name: Base setup for Ubuntu hosts
+  ansible.builtin.import_playbook: playbooks/ubuntu-setup.yml
+
+- name: Base setup for RHEL hosts
+  ansible.builtin.import_playbook: playbooks/rhel-setup.yml
+
+- name: Configure Ubuntu web servers (Apache2)
+  ansible.builtin.import_playbook: playbooks/ubuntu-apache2.yml
+
+- name: Configure Ubuntu database servers (MariaDB)
+  ansible.builtin.import_playbook: playbooks/ubuntu-mysql.yml
+
+- name: Configure RHEL web servers (httpd)
+  ansible.builtin.import_playbook: playbooks/rhel-httpd.yml
+
+- name: Configure RHEL database servers (MariaDB)
+  ansible.builtin.import_playbook: playbooks/rhel-mysql.yml
+
+- name: Configure Linux Samba file shares
+  ansible.builtin.import_playbook: playbooks/linux-fileshare.yml
+
+- name: Configure Linux clients
+  ansible.builtin.import_playbook: playbooks/linux-client.yml

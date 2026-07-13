@@ -1,0 +1,13 @@
+---
+- name: Windows client tooling
+  hosts: "{{ target_hosts | default('role_client') }}"
+  gather_facts: true
+  tasks:
+    - name: End play on non-Windows hosts
+      ansible.builtin.meta: end_host
+      when: ansible_os_family != 'Windows'
+
+    - name: Install client applications from the public Chocolatey feed
+      chocolatey.chocolatey.win_chocolatey:
+        name: "{{ windows_client_packages | default(['notepadplusplus', 'putty']) }}"
+        state: present

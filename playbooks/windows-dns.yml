@@ -1,0 +1,11 @@
+---
+- name: Point Windows members and RODCs at the domain controller for DNS
+  hosts: "{{ target_hosts | default('os_windows:!role_dc') }}"
+  gather_facts: false
+  tasks:
+    - name: Set the DNS client to the domain controller
+      ansible.windows.win_dns_client:
+        adapter_names: '*'
+        dns_servers:
+          - "{{ hostvars[groups['role_dc'][0]].ansible_host }}"
+      when: (groups['role_dc'] | default([])) | length > 0

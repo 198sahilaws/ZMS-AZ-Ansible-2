@@ -1,6 +1,6 @@
 ---
 - name: Windows SMB share
-  hosts: "{{ target_hosts | default('role_fileserver') }}"
+  hosts: "{{ target_hosts | default('role_fileshare') }}"
   gather_facts: true
   vars:
     share_name: "{{ smb_share_name | default('zmsshare') }}"

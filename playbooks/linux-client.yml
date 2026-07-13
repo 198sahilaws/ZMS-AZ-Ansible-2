@@ -1,0 +1,29 @@
+---
+- name: Linux client tooling
+  hosts: "{{ target_hosts | default('role_client') }}"
+  become: true
+  tasks:
+    - name: End play on non-Linux hosts
+      ansible.builtin.meta: end_host
+      when: ansible_os_family not in ['Debian', 'RedHat']
+
+    - name: Install client tooling (Debian family)
+      ansible.builtin.apt:
+        name:
+          - cifs-utils
+          - mariadb-client
+          - curl
+          - jq
+        state: present
+        update_cache: true
+      when: ansible_os_family == 'Debian'
+
+    - name: Install client tooling (RedHat family)
+      ansible.builtin.dnf:
+        name:
+          - cifs-utils
+          - mariadb
+          - curl
+          - jq
+        state: present
+      when: ansible_os_family == 'RedHat'
