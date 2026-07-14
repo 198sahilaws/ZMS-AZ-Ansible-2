@@ -8,6 +8,7 @@
   hosts: localhost
   connection: local
   gather_facts: false
+  become: false
   tasks:
     - name: Assert the consolidated secret name is set
       ansible.builtin.assert:

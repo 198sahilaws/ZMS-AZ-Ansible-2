@@ -34,7 +34,7 @@
   when: ansible_os_family == 'Windows'
   block:
     - name: Set Windows timezone
-      ansible.windows.win_timezone:
+      community.windows.win_timezone:
         timezone: "{{ baseline_windows_timezone }}"
 
     - name: Ensure the Windows Time service is running

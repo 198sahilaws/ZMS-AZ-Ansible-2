@@ -7,6 +7,7 @@
   hosts: localhost
   connection: local
   gather_facts: false
+  become: false
   tasks:
     - name: Assert Key Vault URL and secret name are set
       ansible.builtin.assert:
