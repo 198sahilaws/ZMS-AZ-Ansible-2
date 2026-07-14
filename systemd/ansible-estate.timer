@@ -1,5 +1,5 @@
 [Unit]
-Description=Push the ZMS estate with site.yml (~every 60 minutes)
+Description=Push the ZMS estate with orchestrate.yml (~every 60 minutes)
 
 [Timer]
 OnBootSec=15min

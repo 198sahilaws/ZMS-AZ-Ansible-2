@@ -1,14 +1,48 @@
 ---
-# Top-level orchestration: configure the whole estate in dependency order.
-# Run from the control node:  ansible-playbook orchestrate.yml
+# Top-level orchestration: configure the WHOLE estate automatically, in
+# dependency order. The ansible-estate systemd timer runs THIS on a schedule,
+# so the estate fully converges with NO manual intervention after
+# `terraform apply`. Safe to re-run: every imported play is idempotent and
+# no-ops where a role is absent.
 #
-# Order: baseline -> forest -> DNS -> domain-join -> RODC -> role services.
-# Each imported play targets its own role/distro group and no-ops where a role
-# is absent, so this is safe to run against any role mix.
+# Order: baseline -> Linux role services -> Windows AD chain. Linux runs
+# BEFORE the Windows domain build because the Linux roles are independent of
+# Active Directory; putting them first means a Windows/WinRM/promotion hiccup
+# can never block the Linux installs. The next timer cycle retries whatever
+# did not converge.
+#
+# Run manually the same way:  ansible-playbook orchestrate.yml
+# (Always launch from the repo root so group_vars/ loads - see linux.yml.)
 
 - name: Baseline the estate (cross-OS)
   ansible.builtin.import_playbook: site.yml
 
+# ---------------- Linux role services (AD-independent) ----------------
+- name: Base setup for RHEL hosts
+  ansible.builtin.import_playbook: playbooks/rhel-setup.yml
+
+- name: Base setup for Ubuntu hosts
+  ansible.builtin.import_playbook: playbooks/ubuntu-setup.yml
+
+- name: Configure RHEL web servers (httpd)
+  ansible.builtin.import_playbook: playbooks/rhel-httpd.yml
+
+- name: Configure Ubuntu web servers (Apache2)
+  ansible.builtin.import_playbook: playbooks/ubuntu-apache2.yml
+
+- name: Configure RHEL database servers (MariaDB)
+  ansible.builtin.import_playbook: playbooks/rhel-mysql.yml
+
+- name: Configure Ubuntu database servers (MariaDB)
+  ansible.builtin.import_playbook: playbooks/ubuntu-mysql.yml
+
+- name: Configure Linux Samba file shares
+  ansible.builtin.import_playbook: playbooks/linux-fileshare.yml
+
+- name: Configure Linux clients
+  ansible.builtin.import_playbook: playbooks/linux-client.yml
+
+# ------------- Windows Active Directory chain (ordered) ---------------
 - name: Promote the writable domain controller (forest)
   ansible.builtin.import_playbook: playbooks/windows-adds.yml
 
@@ -35,27 +69,3 @@
 
 - name: Configure Windows clients
   ansible.builtin.import_playbook: playbooks/windows-client.yml
-
-- name: Base setup for Ubuntu hosts
-  ansible.builtin.import_playbook: playbooks/ubuntu-setup.yml
-
-- name: Base setup for RHEL hosts
-  ansible.builtin.import_playbook: playbooks/rhel-setup.yml
-
-- name: Configure Ubuntu web servers (Apache2)
-  ansible.builtin.import_playbook: playbooks/ubuntu-apache2.yml
-
-- name: Configure Ubuntu database servers (MariaDB)
-  ansible.builtin.import_playbook: playbooks/ubuntu-mysql.yml
-
-- name: Configure RHEL web servers (httpd)
-  ansible.builtin.import_playbook: playbooks/rhel-httpd.yml
-
-- name: Configure RHEL database servers (MariaDB)
-  ansible.builtin.import_playbook: playbooks/rhel-mysql.yml
-
-- name: Configure Linux Samba file shares
-  ansible.builtin.import_playbook: playbooks/linux-fileshare.yml
-
-- name: Configure Linux clients
-  ansible.builtin.import_playbook: playbooks/linux-client.yml

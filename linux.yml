@@ -1,0 +1,35 @@
+---
+# Linux-only estate entrypoint. Same role chain as orchestrate.yml's Linux
+# tail, but WITHOUT the Windows AD plays - so a Windows/WinRM problem can't
+# abort the Linux role installs.
+#
+# IMPORTANT: run this from the repo root (ansible-playbook linux.yml). Ansible
+# auto-loads group_vars/ relative to the TOP-LEVEL playbook's directory; the
+# connection settings (ansible_user=azureuser + the Key Vault SSH key) live in
+# the repo-root group_vars/, so launching a playbooks/*.yml file DIRECTLY skips
+# them and SSH falls back to the wrong user with no key. Root entrypoints only:
+# site.yml, orchestrate.yml, linux.yml.
+
+- name: Base setup for RHEL hosts
+  ansible.builtin.import_playbook: playbooks/rhel-setup.yml
+
+- name: Base setup for Ubuntu hosts
+  ansible.builtin.import_playbook: playbooks/ubuntu-setup.yml
+
+- name: Configure RHEL web servers (httpd)
+  ansible.builtin.import_playbook: playbooks/rhel-httpd.yml
+
+- name: Configure Ubuntu web servers (Apache2)
+  ansible.builtin.import_playbook: playbooks/ubuntu-apache2.yml
+
+- name: Configure RHEL database servers (MariaDB)
+  ansible.builtin.import_playbook: playbooks/rhel-mysql.yml
+
+- name: Configure Ubuntu database servers (MariaDB)
+  ansible.builtin.import_playbook: playbooks/ubuntu-mysql.yml
+
+- name: Configure Linux Samba file shares
+  ansible.builtin.import_playbook: playbooks/linux-fileshare.yml
+
+- name: Configure Linux clients
+  ansible.builtin.import_playbook: playbooks/linux-client.yml
