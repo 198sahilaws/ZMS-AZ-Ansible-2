@@ -1,6 +1,6 @@
 ---
 - name: RHEL base setup
-  hosts: "{{ target_hosts | default('distro_rhel') }}"
+  hosts: "distro_rhel"
   become: true
   tasks:
     - name: End play on non-RedHat hosts

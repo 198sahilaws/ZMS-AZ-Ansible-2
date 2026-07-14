@@ -1,6 +1,6 @@
 ---
 - name: Windows client tooling
-  hosts: "{{ target_hosts | default('role_client') }}"
+  hosts: "role_client"
   gather_facts: true
   tasks:
     - name: End play on non-Windows hosts

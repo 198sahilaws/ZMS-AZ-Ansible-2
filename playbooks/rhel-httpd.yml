@@ -1,6 +1,6 @@
 ---
 - name: RHEL httpd
-  hosts: "{{ target_hosts | default('distro_rhel:&role_web') }}"
+  hosts: "distro_rhel:&role_web"
   become: true
   tasks:
     - name: End play on non-RedHat hosts

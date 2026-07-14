@@ -1,6 +1,6 @@
 ---
 - name: Windows AD DS forest promotion
-  hosts: "{{ target_hosts | default('role_dc') }}"
+  hosts: "role_dc"
   gather_facts: true
   tasks:
     - name: End play on non-Windows hosts

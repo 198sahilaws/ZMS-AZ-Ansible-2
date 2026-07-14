@@ -1,6 +1,6 @@
 ---
 - name: Linux client tooling
-  hosts: "{{ target_hosts | default('role_client') }}"
+  hosts: "role_client"
   become: true
   tasks:
     - name: End play on non-Linux hosts

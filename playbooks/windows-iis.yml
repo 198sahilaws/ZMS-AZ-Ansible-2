@@ -1,6 +1,6 @@
 ---
 - name: Windows IIS
-  hosts: "{{ target_hosts | default('role_web') }}"
+  hosts: "role_web"
   gather_facts: true
   tasks:
     - name: End play on non-Windows hosts

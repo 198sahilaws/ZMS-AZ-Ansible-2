@@ -1,6 +1,6 @@
 ---
 - name: Point Windows members and RODCs at the domain controller for DNS
-  hosts: "{{ target_hosts | default('os_windows:!role_dc') }}"
+  hosts: "os_windows:!role_dc"
   gather_facts: false
   tasks:
     - name: Set the DNS client to the domain controller

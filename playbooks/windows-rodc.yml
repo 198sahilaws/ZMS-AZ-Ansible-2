@@ -1,6 +1,6 @@
 ---
 - name: Windows Read-Only Domain Controller
-  hosts: "{{ target_hosts | default('role_rodc') }}"
+  hosts: "role_rodc"
   gather_facts: true
   # Prerequisites: the writable DC (role_dc, via windows-adds.yml) exists and
   # this host resolves the AD domain via that DC (windows-dns.yml sets that up).

@@ -1,6 +1,6 @@
 ---
 - name: Linux Samba file share
-  hosts: "{{ target_hosts | default('role_fileshare') }}"
+  hosts: "role_fileshare"
   become: true
   vars:
     samba_share_name: "{{ smb_share_name | default('zmsshare') }}"

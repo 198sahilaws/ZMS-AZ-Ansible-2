@@ -1,6 +1,6 @@
 ---
 - name: Windows Python (Chocolatey public feed)
-  hosts: "{{ target_hosts | default('os_windows') }}"
+  hosts: "os_windows"
   gather_facts: true
   tasks:
     - name: End play on non-Windows hosts

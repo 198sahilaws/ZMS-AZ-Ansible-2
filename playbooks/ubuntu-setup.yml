@@ -1,6 +1,6 @@
 ---
 - name: Ubuntu base setup
-  hosts: "{{ target_hosts | default('distro_ubuntu') }}"
+  hosts: "distro_ubuntu"
   become: true
   tasks:
     - name: End play on non-Debian hosts
