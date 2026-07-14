@@ -4,6 +4,9 @@
 # unit (which also loads it via EnvironmentFile).
 set -euo pipefail
 
+# Ensure the venv Ansible binaries are on PATH (independent of symlinks).
+export PATH="/opt/ansible-venv/bin:$PATH"
+
 ENV_FILE=/etc/ansible/estate.env
 if [ -f "$ENV_FILE" ]; then
   set -a

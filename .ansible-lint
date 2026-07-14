@@ -26,6 +26,7 @@ mock_modules:
   - community.mysql.mysql_user
   - community.mysql.mysql_db
   - community.windows.win_timezone
+  - ansible.windows.win_timezone
   - community.general.timezone
   - ansible.posix.firewalld
   - ansible.windows.win_dns_client
