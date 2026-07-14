@@ -22,6 +22,8 @@ cd "$REPO_DIR"
 git pull --ff-only || echo "reconverge: git pull skipped/failed; using local repo"
 
 # Install/refresh the pinned collections via the CLI (not via a collection).
-ansible-galaxy collection install -r requirements.yml
+# --upgrade so changed pins (e.g. azure.azcollection 3.1.0 -> 3.19.0) actually
+# replace an already-installed version instead of being skipped as present.
+ansible-galaxy collection install -r requirements.yml --upgrade
 
 exec ansible-playbook bootstrap.yml

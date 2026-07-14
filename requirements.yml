@@ -2,20 +2,28 @@
 # Collections are installed on the control node by scripts/reconverge.sh via
 # the ansible-galaxy CLI (never via a collection, so bootstrap has no
 # chicken-and-egg dependency). Versions are pinned for repeatable runs.
+#
+# These pins MUST track the ansible-core installed by cloud-init (pinned to
+# ansible==14.1.0 => ansible-core 2.21). They are the exact collection set
+# that ships bundled with that ansible release, so they are guaranteed
+# mutually compatible with core 2.21's trusted-template model. Older pins
+# (e.g. azure.azcollection 3.1.0) break the azure_rm inventory on core 2.19+
+# with "is not a valid boolean" because their host filters aren't marked as
+# trusted templates. If you bump ansible in cloud-init, bump these to match.
 collections:
   - name: azure.azcollection
-    version: "3.1.0"
+    version: "3.19.0"
   - name: ansible.windows
-    version: "2.5.0"
+    version: "3.6.1"
   - name: microsoft.ad
-    version: "1.7.1"
+    version: "1.11.0"
   - name: chocolatey.chocolatey
-    version: "1.5.3"
+    version: "1.6.0"
   - name: community.mysql
-    version: "3.10.3"
+    version: "5.0.2"
   - name: community.windows
-    version: "2.3.0"
+    version: "3.2.0"
   - name: community.general
-    version: "9.5.0"
+    version: "13.1.0"
   - name: ansible.posix
-    version: "1.6.2"
+    version: "2.2.0"

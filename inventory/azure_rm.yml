@@ -7,12 +7,19 @@ plugin: azure.azcollection.azure_rm
 
 auth_source: msi
 
-# Scope enumeration to the estate's resource group (from the injected env).
-# This MUST stay RG-scoped: the control identity holds Reader on ONLY this
-# resource group, so a subscription-wide list would 403. The azure_rm plugin
-# templates this field, so the env lookup is resolved at inventory time; if it
-# ever returns empty, the site.yml pre-flight fails loudly rather than silently.
-# (Confirm once with: ansible-inventory -i inventory/azure_rm.yml --graph)
+# Scope enumeration to the estate's resource group. This MUST stay RG-scoped:
+# the control identity holds Reader on ONLY this resource group, so a
+# subscription-wide list would 403.
+#
+# The AUTHORITATIVE scope is the ANSIBLE_AZURE_VM_RESOURCE_GROUPS env var
+# (written to /etc/ansible/estate.env by cloud-init). The azure_rm plugin
+# reads that variable DIRECTLY from os.environ - no Jinja - so it is resolved
+# deterministically. The include_vm_resource_groups list below is only a
+# fallback for manual runs where that env var is unset; note the plugin does
+# NOT run this option through a lookup-enabled template (it only templates the
+# auth options), so a "{{ lookup('env', ...) }}" here silently fails to resolve
+# and yields zero hosts - which is exactly why estate.env sets the env var.
+# (Confirm with: ansible-inventory -i inventory/azure_rm.yml --graph)
 include_vm_resource_groups:
   - "{{ lookup('env', 'AZURE_RESOURCE_GROUP') }}"
 
@@ -23,10 +30,14 @@ plain_host_names: true
 hostvar_expressions:
   ansible_host: private_ipv4_addresses[0]
 
-# Exclude anything not powered on or not provisioned by Terraform.
+# Exclude anything not powered on, not provisioned by Terraform, or the
+# control node itself (Role=ansible-control is tagged OS=linux, so without
+# this it would land in os_linux and site.yml would try to configure the box
+# it is running from).
 default_host_filters:
   - "powerstate != 'running'"
   - "tags['ManagedBy'] | default('') != 'Terraform'"
+  - "tags['Role'] | default('') == 'ansible-control'"
 
 # Build connection/behaviour groups from tags (mirrors the AWS design):
 #   OS=linux         -> os_linux         Distro=ubuntu -> distro_ubuntu
