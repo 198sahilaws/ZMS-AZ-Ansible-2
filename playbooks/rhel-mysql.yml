@@ -21,7 +21,7 @@
         enabled: true
 
     - name: Set the MariaDB root password idempotently
-      community.mysql.mysql_user:
+      ansible.mariadb.mariadb_user:
         name: root
         host: localhost
         password: >-

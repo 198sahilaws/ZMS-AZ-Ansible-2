@@ -19,8 +19,12 @@ collections:
     version: "1.11.0"
   - name: chocolatey.chocolatey
     version: "1.6.0"
-  - name: community.mysql
-    version: "5.0.2"
+  # ansible.mariadb replaces community.mysql for MariaDB automation
+  # (community.mysql is dropping MariaDB support in its 6.0.0). 6.0.2 is
+  # tested against ansible-core 2.21 and needs the hosts' PyMySQL (already
+  # installed by the rhel-/ubuntu-mysql playbooks).
+  - name: ansible.mariadb
+    version: "6.0.2"
   - name: community.windows
     version: "3.2.0"
   - name: community.general
