@@ -7,6 +7,16 @@
       ansible.builtin.meta: end_host
       when: ansible_os_family != 'RedHat'
 
+    # htop (and many other tools) live in EPEL, not RHEL base/AppStream. Install
+    # epel-release from the project URL (no subscription needed); disable GPG on
+    # this one RPM because the EPEL key isn't imported until it lands. Subsequent
+    # installs from EPEL are then GPG-verified normally.
+    - name: Enable the EPEL repository
+      ansible.builtin.dnf:
+        name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm"
+        state: present
+        disable_gpg_check: true
+
     - name: Install base tooling
       ansible.builtin.dnf:
         name:
